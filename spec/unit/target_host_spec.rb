@@ -253,25 +253,25 @@ RSpec.describe ChefApply::TargetHost do
   end
 
   context "#apply_ssh_config" do
-    let(:ssh_host_config) { { user: "testuser", port: 1000, proxy: double("Net:SSH::Proxy::Command") } }
-    let(:connection_config) { { user: "user1", port: 8022, proxy: nil } }
+    let(:ssh_host_config) { { user: "testuser", port: 1000, proxy: double("Net:SSH::Proxy::Command"), keys: ["use key"] } }
+    let(:connection_config) { { user: "user1", port: 8022, proxy: nil, key_files: nil } }
     before do
       allow(subject).to receive(:ssh_config_for_host).and_return ssh_host_config
     end
 
-    ChefApply::TargetHost::SSH_CONFIG_OVERRIDE_KEYS.each do |key|
+    ChefApply::TargetHost::SSH_CONFIG_OVERRIDE_KEYS_MAP.each do |host_key, config_key, opt_key|
       context "when a value is not explicitly provided in options" do
-        it "replaces config config[:#{key}] with the ssh config value" do
-          subject.apply_ssh_config(connection_config, key => nil)
-          expect(connection_config[key]).to eq(ssh_host_config[key])
+        it "replaces config config[:#{config_key}] with the ssh config value" do
+          subject.apply_ssh_config(connection_config, opt_key => nil)
+          expect(connection_config[config_key]).to eq(ssh_host_config[host_key])
         end
       end
 
       context "when a value is explicitly provided in options" do
         it "the connection configuration isnot updated with a value from ssh config" do
           original_config = connection_config.clone
-          subject.apply_ssh_config(connection_config, { key => "testvalue" } )
-          expect(connection_config[key]).to eq original_config[key]
+          subject.apply_ssh_config(connection_config, { opt_key => "testvalue" } )
+          expect(connection_config[config_key]).to eq original_config[config_key]
         end
       end
     end

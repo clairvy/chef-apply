@@ -25,8 +25,13 @@ module ChefApply
     # These values may exist in .ssh/config but will be ignored by train
     # in favor of its defaults unless we specify them explicitly.
     # See #apply_ssh_config
-    SSH_CONFIG_OVERRIDE_KEYS = [:user, :port, :proxy].freeze
-
+    SSH_CONFIG_OVERRIDE_KEYS_MAP = [
+      [:user, :user, :user],
+      [:port, :port, :port],
+      [:proxy, :proxy, :proxy],
+      [:keys, :key_files, :identityfile],
+    ].freeze
+    SSH_CONFIG_OVERRIDE_KEYS = SSH_CONFIG_OVERRIDE_KEYS_MAP.map(&:first).freeze
     # We're borrowing a page from train here - because setting up a
     # reliable connection for testing is a multi-step process,
     # we'll provide this method which instantiates a TargetHost connected
@@ -102,9 +107,9 @@ module ChefApply
       # values that we get out of .ssh/config if present and if they haven't
       # been explicitly given.
       host_cfg = ssh_config_for_host(config[:host])
-      SSH_CONFIG_OVERRIDE_KEYS.each do |key|
-        if host_cfg.key?(key) && opts_in[key].nil?
-          config[key] = host_cfg[key]
+      SSH_CONFIG_OVERRIDE_KEYS_MAP.each do |host_key, config_key, opt_key|
+        if host_cfg.key?(host_key) && opts_in[opt_key].nil?
+          config[config_key] = host_cfg[host_key]
         end
       end
     end
